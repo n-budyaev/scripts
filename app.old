@@ -1,0 +1,39 @@
+from flask import Flask, jsonify
+import subprocess
+import json
+import os
+
+app = Flask(__name__)
+
+@app.route("/run-script")
+def run_script():
+    script_path = "/opt/scripts/my_script.sh"
+    # �ав
+    if not os.path.isfile(script_path):
+        return jsonify({"error": "Script not found"}), 404
+
+    try:
+        result = subprocess.run(
+            [script_path],
+            capture_output=True,
+            text=True,
+            timeout=30  #аний
+        )
+
+        lines = result.stdout.strip().splitlines()
+
+        return jsonify({
+            "status": "ok" if result.returncode == 0 else "error",
+            "message": lines[0] if len(lines) > 0 else "",
+            "timestamp": lines[1] if len(lines) > 1 else None,
+            "stderr": result.stderr,
+        })
+
+    except subprocess.TimeoutExpired:
+        return jsonify({"error": "Script timed out"}), 504
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    # �в
+    app.run(host="0.0.0.0", port=5000)

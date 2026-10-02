@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Панель запуска скриптов</title>
+  <style>
+    :root {
+      --primary: #3b82f6;
+      --danger: #ef4444;
+      --success: #10b981;
+      --bg: #f3f4f6;
+      --card: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      padding: 2rem;
+      color: #1f2937;
+      margin: 0;
+    }
+    .wrapper {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .card {
+      background: var(--card);
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      flex: 1 1 480px;
+      max-width: 720px;
+    }
+    h1 { margin-top: 0; font-size: 1.5rem; }
+    h2 { margin-top: 0; font-size: 1.2rem; color: #374151; }
+    .controls {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    select, button {
+      padding: 0.65rem 1.1rem;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 1rem;
+    }
+    select { background: white; cursor: pointer; }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    button:hover:not([disabled]) { background: #2563eb; }
+    button[disabled] { background: #9ca3af; cursor: not-allowed; }
+    .status {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .status.show { display: block; }
+    .status.ok { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .status.error { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .section-title {
+      margin-top: 1.5rem;
+      margin-bottom: 0.4rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    pre {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      margin: 0;
+      min-height: 3rem;
+    }
+    pre.stderr { color: #f38ba8; }
+    code { font-family: ui-monospace, "Cascadia Code", SFMono-Regular, Menlo, monospace; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+
+    <!-- Блок 1: Перезапуск УТМ -->
+    <div class="card">
+      <h1>Панель перезапуска УТМ</h1>
+      <p>Выберите сервер и нажмите «Запустить».</p>
+
+      <div class="controls">
+        <label for="script-select-1" style="font-weight:500;">Скрипт:</label>
+        <select id="script-select-1">
+          <option value="11">11</option>
+          <option value="24">24</option>
+          <option value="40">40</option>
+          <option value="48">48</option>
+          <option value="53">53</option>
+        </select>
+        <button id="run-btn-1" onclick="runScript(1)">Запустить</button>
+      </div>
+
+      <div id="status-1" class="status"></div>
+
+      <div class="section-title">Результат (JSON)</div>
+      <pre id="output-json-1"><code>Ожидание…</code></pre>
+
+      <div class="section-title">Вывод скрипта (stdout)</div>
+      <pre id="output-stdout-1"><code>—</code></pre>
+
+      <div class="section-title">Ошибки (stderr)</div>
+      <pre id="output-stderr-1" class="stderr"><code>—</code></pre>
+    </div>
+
+    <!-- Блок 2: Резервное копирование -->
+    <div class="card">
+      <h2>Резервное копирование</h2>
+      <p>Выберите скрипт бэкапа и нажмите «Запустить».</p>
+
+      <div class="controls">
+        <label for="script-select-2" style="font-weight:500;">Скрипт:</label>
+        <select id="script-select-2">
+          <option value="60">60</option>
+          <option value="61">61</option>
+          <option value="62">62</option>
+        </select>
+        <button id="run-btn-2" onclick="runScript(2)">Запустить</button>
+      </div>
+
+      <div id="status-2" class="status"></div>
+
+      <div class="section-title">Результат (JSON)</div>
+      <pre id="output-json-2"><code>Ожидание…</code></pre>
+
+      <div class="section-title">Вывод скрипта (stdout)</div>
+      <pre id="output-stdout-2"><code>—</code></pre>
+
+      <div class="section-title">Ошибки (stderr)</div>
+      <pre id="output-stderr-2" class="stderr"><code>—</code></pre>
+    </div>
+
+  </div>
+
+  <script>
+    const API_BASE = '';
+
+    async function runScript(blockId) {
+      const select    = document.getElementById(`script-select-${blockId}`);
+      const btn       = document.getElementById(`run-btn-${blockId}`);
+      const statusEl  = document.getElementById(`status-${blockId}`);
+      const jsonEl    = document.getElementById(`output-json-${blockId}`);
+      const stdoutEl  = document.getElementById(`output-stdout-${blockId}`);
+      const stderrEl  = document.getElementById(`output-stderr-${blockId}`);
+
+      const scriptName = select.value;
+      if (!scriptName) return;
+
+      // UI: состояние "выполняется"
+      btn.disabled = true;
+      btn.textContent = 'Выполняется…';
+      statusEl.className = 'status';
+      statusEl.textContent = '';
+      jsonEl.textContent = 'Выполняется…';
+      stdoutEl.textContent = '—';
+      stderrEl.textContent = '—';
+
+      try {
+        const res = await fetch(`${API_BASE}/run?script=${encodeURIComponent(scriptName)}`);
+        const text = await res.text();
+
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          statusEl.className = 'status show error';
+          statusEl.textContent = 'Сервер вернул не JSON. Первые 500 символов:';
+          jsonEl.textContent = text.substring(0, 500);
+          return;
+        }
+
+        // Показываем полный JSON
+        jsonEl.textContent = JSON.stringify(data, null, 2);
+
+        // Статус
+        if (data.status === 'ok') {
+          statusEl.className = 'status show ok';
+          statusEl.textContent = `✅ Скрипт «${data.script || scriptName}» выполнен. Код возврата: ${data.returncode}`;
+        } else {
+          statusEl.className = 'status show error';
+          statusEl.textContent = `❌ Ошибка: ${data.message || 'неизвестная'} (код ${data.returncode})`;
+        }
+
+        // Вывод
+        stdoutEl.textContent = data.output || '—';
+        stderrEl.textContent = data.stderr || '—';
+
+      } catch (err) {
+        statusEl.className = 'status show error';
+        statusEl.textContent = 'Сетевая ошибка: ' + err.message;
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Запустить';
+      }
+    }
+  </script>
+</body>
+</html>
