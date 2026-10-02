@@ -1,2 +1,6 @@
-# scripts
-run scripts from the web-app on a flask
+# scripts - run scripts from the web-app on a flask
+1. поднял LXC - контейнер Ubuntu в Proxmox
+2. установил в нем Python+Flask
+3. настроил статический IP
+4. в папке /opt/scripts разместил bash-скрипты
+5. создал одностраничное приложение с выбором скрипта из готового списка и кнопкой запуска. Предусмотрен вывод результата и сообщения об ошибках
